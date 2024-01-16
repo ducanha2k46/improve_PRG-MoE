@@ -1,10 +1,9 @@
 import torch
 import torch.nn as nn
 import numpy as np
-import dgl
 from torch_geometric.nn import RGCNConv
 
-def make_graph(speakers:torch.Tensor, device):
+def make_graph(speakers: torch.Tensor, emotions: torch.Tensor, device):
     edge_index, edge_type = [], []
     length = speakers.size(1)
     batch_size = speakers.size(0)
@@ -13,16 +12,21 @@ def make_graph(speakers:torch.Tensor, device):
         for l in range(length):
             for k in range(length):
                 edge_index.append(torch.tensor([l + total_len, k + total_len]))
-                if (speakers[j, l] == speakers[j, k]):
-                    edge_type.append(1)
+                if (speakers[j, l] == speakers[j, k]) and (emotions[j, l] == emotions[j, k]):
+                    edge_type.append(3)  # Both Speaker and Emotion are the same
+                elif (speakers[j, l] == speakers[j, k]):
+                    edge_type.append(2)  # Only Speaker is the same
+                elif (emotions[j, l] == emotions[j, k]):
+                    edge_type.append(1)  # Only Emotion is the same
                 else:
-                    edge_type.append(0)
+                    edge_type.append(0)  # Neither Speaker nor Emotion is the same
         total_len += length
-    
+
     edge_index = torch.stack(edge_index).transpose(1, 0).to(device)
     edge_type = torch.tensor(edge_type).to(device)
 
     return edge_index, edge_type
+
 
 class RGCN(nn.Module):
     def __init__(self, input_size, output_size) -> None:
@@ -32,7 +36,6 @@ class RGCN(nn.Module):
     def forward(self, node_features,edge_index, edge_type):
         return self.gcn(node_features,edge_index ,edge_type)
     
-
 
 if __name__ == "__main__":
     device = "cpu"
@@ -45,7 +48,13 @@ if __name__ == "__main__":
 
     out_feature = conv(batch,edge_index, edge_type)
 
-    print(out_feature.shape)
+    print(out_feature)
+
+    print(edge_type)
+
+    print(edge_index)
+
+    print(conv)
 
 
 

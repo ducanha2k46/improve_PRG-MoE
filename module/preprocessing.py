@@ -25,7 +25,7 @@ def get_data(data_file, device, max_seq_len, contain_context=False):
 
     doc_speaker, doc_emotion_label, doc_pair_cause_label, doc_pair_binary_cause_label = [list() for _ in range(4)]
 
-    len_content = list()
+
 
     for doc_id, content in data.items():
         speaker, emotion_label, corresponding_cause_turn, corresponding_cause_span, corresponding_cause_label = [list() for _ in range(5)]
@@ -76,7 +76,7 @@ def get_data(data_file, device, max_seq_len, contain_context=False):
         doc_emotion_label.append(emotion_label)
         doc_pair_cause_label.append(pair_cause_label)
         doc_pair_binary_cause_label.append(pair_binary_cause_label)
-        len_content.append(len(content))
+
     
     out_speaker, out_emotion_label = [list() for _ in range(2)]
     out_pair_cause_label, out_pair_binary_cause_label = torch.stack(doc_pair_cause_label), torch.stack(doc_pair_binary_cause_label)
@@ -91,8 +91,8 @@ def get_data(data_file, device, max_seq_len, contain_context=False):
         out_speaker.append(speaker_t); out_emotion_label.append(emotion_label_t)
 
     out_speaker, out_emotion_label = torch.stack(out_speaker).type(torch.FloatTensor), torch.stack(out_emotion_label)
-    len_content = torch.tensor(len_content, dtype=int)
-    return preprocessed_utterance, out_speaker.to(device), out_emotion_label.to(device), out_pair_cause_label.to(device), out_pair_binary_cause_label.to(device), len_content.to(device)
+
+    return preprocessed_utterance, out_speaker.to(device), out_emotion_label.to(device), out_pair_cause_label.to(device), out_pair_binary_cause_label.to(device)
 
 def load_utterance(data_file, device, max_seq_len):
     f = open(data_file)

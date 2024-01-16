@@ -59,9 +59,14 @@ class GuidedMoEBasic(nn.Module):
 
     def get_pair_embedding(self, emotion_prediction, input_ids, attention_mask, token_type_ids, speaker_ids):
         batch_size, max_doc_len, max_seq_len = input_ids.shape
+        emotion_probabilities = F.softmax(emotion_prediction, dim=1)
+        predicted_label = torch.argmax(emotion_probabilities, dim=1)
+
+        # print(predicted_label.shape)
+        # print(speaker_ids.shape)
 
         _, pooled_output = self.bert(input_ids=input_ids.view(-1, max_seq_len), attention_mask=attention_mask.view(-1, max_seq_len), token_type_ids=token_type_ids.view(-1, max_seq_len), return_dict=False)
-        edge_index, edge_types = make_graph(speaker_ids, speaker_ids.device)
+        edge_index, edge_types = make_graph(speaker_ids, predicted_label, speaker_ids.device)
         
         out_graph = self.gcn(pooled_output, edge_index, edge_types)
 
