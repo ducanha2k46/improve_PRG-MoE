@@ -41,8 +41,8 @@ if __name__ == "__main__":
     device = "cpu"
     batch = torch.randn((15, 5))
     speakers = torch.tensor([[0, 1, 1, 0, 0], [0, 1, 0, 1, 1], [0, 1, 0, 1, 0]])
-
-    edge_index, edge_type = make_graph(speakers, device)
+    emotions = torch.randint(1, 6, (45,))
+    edge_index, edge_type = make_graph(speakers, emotions, device)
 
     conv = RGCN(5, 5)
 
