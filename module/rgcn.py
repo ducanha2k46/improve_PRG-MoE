@@ -12,11 +12,11 @@ def make_graph(speakers: torch.Tensor, emotions: torch.Tensor, device):
         for l in range(length):
             for k in range(length):
                 edge_index.append(torch.tensor([l + total_len, k + total_len]))
-                if (speakers[j, l] == speakers[j, k]) and (emotions[j, l] == emotions[j, k]):
+                if (speakers[j, l] == speakers[j, k]) and (emotions[(j - 1)*length + l] == emotions[(j - 1)*length + k]):
                     edge_type.append(3)  # Both Speaker and Emotion are the same
                 elif (speakers[j, l] == speakers[j, k]):
                     edge_type.append(2)  # Only Speaker is the same
-                elif (emotions[j, l] == emotions[j, k]):
+                elif (emotions[(j - 1)*length + l] == emotions[(j - 1)*length + k]):
                     edge_type.append(1)  # Only Emotion is the same
                 else:
                     edge_type.append(0)  # Neither Speaker nor Emotion is the same
@@ -31,7 +31,7 @@ def make_graph(speakers: torch.Tensor, emotions: torch.Tensor, device):
 class RGCN(nn.Module):
     def __init__(self, input_size, output_size) -> None:
         super(RGCN, self).__init__()
-        self.gcn = RGCNConv(input_size, output_size, 2)
+        self.gcn = RGCNConv(input_size, output_size, 4)
     
     def forward(self, node_features,edge_index, edge_type):
         return self.gcn(node_features,edge_index ,edge_type)
