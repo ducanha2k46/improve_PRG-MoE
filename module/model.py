@@ -24,18 +24,22 @@ class GuidedMoEBasic(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, input_ids, attention_mask, token_type_ids, speaker_ids):
-        emotion_pred = self.emotion_classification_task(input_ids, attention_mask, token_type_ids)
+        emotion_pred = self.emotion_classification_task(input_ids, attention_mask, token_type_ids, speaker_ids)
         cause_pred = self.binary_cause_classification_task(emotion_pred, input_ids, attention_mask, token_type_ids, speaker_ids)
 
         return emotion_pred, cause_pred
 
-    def emotion_classification_task(self, input_ids, attention_mask, token_type_ids):
+    def emotion_classification_task(self, input_ids, attention_mask, token_type_ids,speaker_ids):
         batch_size, max_doc_len, max_seq_len = input_ids.shape
         _, pooled_output = self.bert(input_ids=input_ids.view(-1, max_seq_len),
                                      attention_mask=attention_mask.view(-1, max_seq_len),
                                      token_type_ids=token_type_ids.view(-1, max_seq_len),
                                      return_dict=False)
-        utterance_representation = self.dropout(pooled_output)
+        edge_index, edge_types = make_graph(speaker_ids, speaker_ids.device)
+        
+        out_graph = self.gcn(pooled_output, edge_index, edge_types)
+
+        utterance_representation = self.dropout(out_graph)
         return self.emotion_linear(utterance_representation)
 
     def binary_cause_classification_task(self, emotion_prediction, input_ids, attention_mask, token_type_ids, speaker_ids):
@@ -60,13 +64,9 @@ class GuidedMoEBasic(nn.Module):
     def get_pair_embedding(self, emotion_prediction, input_ids, attention_mask, token_type_ids, speaker_ids):
         batch_size, max_doc_len, max_seq_len = input_ids.shape
         
-        print(input_ids.shape)
-        print(input_ids)
-        edge_index, edge_types = make_graph(speaker_ids, speaker_ids.device)
+        _, pooled_output = self.bert(input_ids=input_ids.view(-1, max_seq_len), attention_mask=attention_mask.view(-1, max_seq_len), token_type_ids=token_type_ids.view(-1, max_seq_len), return_dict=False)
         
-        out_graph = self.gcn(input_ids, edge_index, edge_types)
-
-        utterance_representation = self.dropout(out_graph)
+        utterance_representation = self.dropout(pooled_output)
         
         concatenated_embedding = torch.cat((utterance_representation, emotion_prediction, speaker_ids.view(-1).unsqueeze(1)), dim=1) # 여기서 emotion_prediction에 detach를 해야 문제가 안생기겠지? 해보고 문제생기면 detach 고고
 
