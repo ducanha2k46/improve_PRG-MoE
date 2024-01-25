@@ -38,9 +38,14 @@ class GuidedMoEBasic(nn.Module):
         edge_index, edge_types = make_graph(speaker_ids, speaker_ids.device)
         
         out_graph = self.gcn(pooled_output, edge_index, edge_types)
-
-        utterance_representation = self.dropout(out_graph)
-        return self.emotion_linear(utterance_representation)
+        emotion_li = []
+        for i in range(out_graph.shape[0]):
+            node_feature = out_graph[i]
+            # print(node_feature.shape)
+            # print(node_feature)
+            emotion_li.append(self.emotion_linear(node_feature))
+            # Tiến hành xử lý với node_feature tại đây
+        return emotion_li
 
     def binary_cause_classification_task(self, emotion_prediction, input_ids, attention_mask, token_type_ids, speaker_ids):
         pair_embedding = self.get_pair_embedding(emotion_prediction, input_ids, attention_mask, token_type_ids, speaker_ids)

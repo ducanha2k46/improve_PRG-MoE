@@ -3,6 +3,8 @@ import torch.nn as nn
 import numpy as np
 # import dgl
 from torch_geometric.nn import RGCNConv
+from torch_geometric.utils import to_dense_adj
+
 
 def make_graph(speakers:torch.Tensor, device):
     edge_index, edge_type = [], []
@@ -45,8 +47,8 @@ class RGCN(nn.Module):
 
 if __name__ == "__main__":
     device = "cpu"
-    batch = torch.randn((15, 5))
-    speakers = torch.tensor([[0, 1, 0, 1, 1], [0, 1, 1, 1, 0], [0, 1, 1, 1, 0]])
+    batch = torch.randn((5, 5))
+    speakers = torch.tensor([[0, 1, 0, 1, 1]])
     edge_index, edge_type = make_graph(speakers, device)
     conv = RGCN(5, 5)
     out_feature = conv(batch,edge_index, edge_type)
@@ -58,8 +60,11 @@ if __name__ == "__main__":
     #     # Tiến hành xử lý với node_feature tại đây
 
     # print(emotion_linear(out_feature))
-
-    print(edge_index.shape)
     print(edge_index)
-    print(edge_type.shape)
     print(edge_type)
+    a_matrix = to_dense_adj(edge_index)
+    # print(edge_index.shape)
+    # print(edge_index)
+    # print(edge_type.shape)
+    # print(edge_type)
+    print(a_matrix)
