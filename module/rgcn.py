@@ -23,11 +23,9 @@ def make_graph(speakers:torch.Tensor, device):
         print(length_max)
         for l in range(length_max):
             for k in range(length_max):
-                edge_index.append(torch.tensor([l + total_len, k + total_len]))
                 if (speakers[j, l] == speakers[j, k]):
+                    edge_index.append(torch.tensor([l + total_len, k + total_len]))
                     edge_type.append(1)
-                else:
-                    edge_type.append(0)
         total_len += length
     
     edge_index = torch.stack(edge_index).transpose(1, 0).to(device)

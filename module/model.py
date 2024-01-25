@@ -29,23 +29,23 @@ class GuidedMoEBasic(nn.Module):
 
         return emotion_pred, cause_pred
 
-    def emotion_classification_task(self, input_ids, attention_mask, token_type_ids,speaker_ids):
+    def emotion_classification_task(self, input_ids, attention_mask, token_type_ids, speaker_ids):
         batch_size, max_doc_len, max_seq_len = input_ids.shape
         _, pooled_output = self.bert(input_ids=input_ids.view(-1, max_seq_len),
-                                     attention_mask=attention_mask.view(-1, max_seq_len),
-                                     token_type_ids=token_type_ids.view(-1, max_seq_len),
-                                     return_dict=False)
+                                    attention_mask=attention_mask.view(-1, max_seq_len),
+                                    token_type_ids=token_type_ids.view(-1, max_seq_len),
+                                    return_dict=False)
         edge_index, edge_types = make_graph(speaker_ids, speaker_ids.device)
         
         out_graph = self.gcn(pooled_output, edge_index, edge_types)
-        emotion_li = []
-        for i in range(out_graph.shape[0]):
-            node_feature = out_graph[i]
-            # print(node_feature.shape)
-            # print(node_feature)
-            emotion_li.append(self.emotion_linear(node_feature))
-            # Tiến hành xử lý với node_feature tại đây
-        return emotion_li
+        
+        # Xóa edge_index và edge_types và giải phóng bộ nhớ cache GPU
+        utterance_representation = self.dropout(out_graph)
+        del edge_index, edge_types, out_graph
+        torch.cuda.empty_cache()
+        return self.emotion_linear(utterance_representation)
+
+
 
     def binary_cause_classification_task(self, emotion_prediction, input_ids, attention_mask, token_type_ids, speaker_ids):
         pair_embedding = self.get_pair_embedding(emotion_prediction, input_ids, attention_mask, token_type_ids, speaker_ids)
